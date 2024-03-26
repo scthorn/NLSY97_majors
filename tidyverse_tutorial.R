@@ -33,7 +33,7 @@ summary(df)
 
 #--------------MANIPULATING DATA WITH DPLYR------------------------
 
-# dplyr Dplyr is a package that provides functions for manipulating data. 
+# dplyr is a package that provides functions for manipulating data. 
 
 # ------------- common dplyr verbs -------------------------------      
 
@@ -64,7 +64,7 @@ df %>%
 
 df %>%
   group_by(R0536402) %>%
-  count()
+  count() #this will count the number of Rs for each year of birth
 
 # The syntax as written above only prints to the console. If you want to save the output you need to assign it to a new dataframe.
 
@@ -77,7 +77,7 @@ df_practice <- df %>%
 
 # ------------- working with the NLSY data -------------------------------      
 
-#let's use these dplyr functions to make this data a little easier to work with
+# Let's use these dplyr functions to make this data a little easier to work with. If you're new to R, don't worry about understanding every line of code here--it's building on the basic dplyr verbs a bit.
 
 #rename variables
 df <- df |>
@@ -220,31 +220,31 @@ df_simple|>
 
 #for today's purposes we'll just drop cases that are missing hhincome2021 or edu
 df_simple <- df_simple |>
-  filter(!is.na(hhincome2021) & !is.na(educ))
+  filter(!is.na(hhincome2021) & !is.na(educ)) #filter to only include cases with non-missing values for hhincome2021 and educ
 
 #I think the reason we're seeing so many missing values for degree dates is because the respondent hasn't completed that degree. But let's check that logic. 
 df_simple |>
-  group_by(educ) |>
-  summarize(across(ba_date:ma_date, ~ sum(is.na(.))))
+  group_by(educ) |> #group by educational attainment
+  summarize(across(ba_date:ma_date, ~ sum(is.na(.)))) #count missing values for degree dates by educational attainment
 
 #That's not what I was hoping to see. Let's just get rid of those variables. We don't need them.
 df_simple <- df_simple |>
-  select(-ba_date, -prof_date, -phd_date, -ma_date)
+  select(-ba_date, -prof_date, -phd_date, -ma_date) #the '-' tells R to drop the variables
 
 ###consolidate parent education variables
 
 #We don't need four separate parent education variables. Let's consolidate them into a single variable indicating the highest level of education achieved by any parent.
 
 #first we have to make it ordinal.
-ranking <- c("less than HS" = 1, "HS" = 2, "Some college" = 3, "BA or more" = 4) 
+ranking <- c("less than HS" = 1, "HS" = 2, "Some college" = 3, "BA or more" = 4) #create a variable to hold the ranking for the levels of education
 
 df_simple <- df_simple |> 
-  mutate(across(biodad_edu:resmom_edu, ~ factor(., levels = names(ranking), ordered = TRUE)))
+  mutate(across(biodad_edu:resmom_edu, ~ factor(., levels = names(ranking), ordered = TRUE))) #convert to factor with the levels we want
 
 #Now we can create a variable for the highest level of education achieved by any parent.
 df_simple <- df_simple |>
-  mutate(parent_edu = pmax(as.numeric(biodad_edu), as.numeric(biomom_edu), as.numeric(resdad_edu), as.numeric(resmom_edu), na.rm = TRUE)) |>
-  mutate(parent_edu = factor(parent_edu, levels = 1:4, labels = names(ranking), ordered = TRUE))
+  mutate(parent_edu = pmax(as.numeric(biodad_edu), as.numeric(biomom_edu), as.numeric(resdad_edu), as.numeric(resmom_edu), na.rm = TRUE)) |> #pmax returns the maximum value for each row
+  mutate(parent_edu = factor(parent_edu, levels = 1:4, labels = names(ranking), ordered = TRUE)) #convert to factor with the levels we want
 
 #Take a look to ensure we did what we meant to do.
 df_simple
@@ -277,7 +277,7 @@ df_simple |>
 
 #continuous variable
 df_simple |>
-  summarize(mean_income = mean(hhincome2021, na.rm = TRUE),    
+  summarize(mean_income = mean(hhincome2021, na.rm = TRUE), #the na.rm argument tells R to ignore missing values
             median_income = median(hhincome2021, na.rm = TRUE),
             sd_income = sd(hhincome2021, na.rm = TRUE),
             min_income = min(hhincome2021, na.rm = TRUE),
@@ -325,7 +325,7 @@ ggplot(df_simple, aes(y = hhincome2021)) +
 # ------------- bivariate -------------------------------      
 
 ggplot(df_simple, aes(x = parent_edu, y = educ)) + 
-  geom_jitter() 
+  geom_jitter() #jitter is a way to spread out points that would otherwise overlap
 
 ggplot(df_simple, aes(x = parent_edu, y = hhincome2021)) + 
   geom_boxplot() + 
@@ -333,7 +333,7 @@ ggplot(df_simple, aes(x = parent_edu, y = hhincome2021)) +
 
 ggplot(df_simple, aes(x = hhincome2021)) + 
   geom_histogram() + 
-  facet_wrap(~parent_edu) 
+  facet_wrap(~parent_edu) #facet_wrap creates separate plots for each level of a categorical variable
 
 # ------------- exercises 4 -------------------------------      
 
