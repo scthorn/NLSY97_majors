@@ -3,51 +3,55 @@
   #https://r4ds.hadley.nz/. 
   #https://jhudatascience.org/tidyversecourse/
 
-#In this script I apply some commonly used functions from the tidyverse packages to a dataset from the National Longitudinal Survey of Youth 1979 (NLSY79).
+#This script walks you through the tidyverse by cleaning, reformatting, and exploring data from NLSY97, a large scale longitudinal survey conducted by the U.S. Bureau of Labor Statistics. 
 
-#--------------GET SET UP, IMPORT DATA WITH READR------------------------
+#--------------------------------------
 
-# Set the working directory to the directory of the current script. Only works in RStudio.
-try(setwd(dirname(rstudioapi::getActiveDocumentContext()$path)))
+# Uncomment to set the working directory to the directory of the current script. Only works in RStudio.
+#try(setwd(dirname(rstudioapi::getActiveDocumentContext()$path)))
 
-#Load tidyverse, a collection of R packages that provides a cohesive framework for cleaning, manipulating, analyzing, and visualizing data.
+# load tidyverse, a collection of R packages that provides a cohesive framework for cleaning, manipulating, analyzing, and visualizing data.
 
 #install.packages("tidyverse")
 
 library(tidyverse)
 
-#import data using readr, a package that provides a fast and friendly way to read rectangular data (like csv files) into R. Save it as a dataframe called df.
+#--------------IMPORTING DATA WITH READR------------------------
+
+# import data using readr, a package that provides a fast and friendly way to read rectangular data (like csv files) into R. Save it as a dataframe called df.
+
 df <- read_csv("data/input/tidytutorial.csv")
 
-#all sorts of ways to take a look at the data
+# all sorts of ways to take a look at the data
+
 df 
-
-head(df)
-
-tail(df)
 
 glimpse(df)
 
 summary(df)
 
 
-
 #--------------MANIPULATING DATA WITH DPLYR------------------------
 
+# dplyr Dplyr is a package that provides functions for manipulating data. 
 
-#dplyr is a package that provides a grammar of data manipulation. It's built around verbs. Try each of the following to see what they do. 
+# ------------- common dplyr verbs -------------------------------      
 
-rename(df, yob = R0536402) #applying to columns
+# work with columns
+rename(df, yob = R0536402) 
 select(df, R0000100, R0536300, R0536402)
 relocate(df, R0536402)
 mutate(df, ageish2021 = 2021 - R0536402)
 
-
-filter(df, R0536402 == 1980) #applying to rows
+# work with rows
+filter(df, R0536402 == 1980) 
 slice(df, 1:3)
 sample_n(df, 3) 
 
-group_by(df, R0536402) #grouping data. Usually you would do this to apply a function to each group (see below for example)
+# work with groups
+group_by(df, R0536402) #Usually you would do this to apply a function to each group (see below for example)
+
+# ------------- the pipe (%>%) -------------------------------      
 
 # you can use the 'pipe' to combine multiple actions. It takes the output of one function and uses it as the input to the next function.
 
@@ -62,7 +66,7 @@ df %>%
   group_by(R0536402) %>%
   count()
 
-#The syntax as written above only prints to the console. If you want to save the output you need to assign it to a new dataframe.
+# The syntax as written above only prints to the console. If you want to save the output you need to assign it to a new dataframe.
 
 df_practice <- df %>%
   rename(yob = R0536402) %>%
@@ -70,6 +74,8 @@ df_practice <- df %>%
   relocate(yob) %>%
   mutate(ageish2021 = 2021 - yob) %>%
   filter(ageish2021 == 41)
+
+# ------------- working with the NLSY data -------------------------------      
 
 #let's use these dplyr functions to make this data a little easier to work with
 
@@ -145,9 +151,7 @@ df <- df |>
   )))
 
 
-
-
-#exercises 1--------------------------------------------
+# ------------- exercises 1 -------------------------------      
 
 #1. Rename the hhincome2015 variable to hhincome15 (or anything else you want).
 #2. Recode the urbanrural2021 variable to "rural" for 0, "urban" for 1, and "unknown" for 2.
@@ -192,7 +196,7 @@ back_to_wide #take a look. this data is back in wide format
 back_to_wide <- back_to_wide |>
   rename_with(~str_c("hhincome", .x), '2017':'2021') #sidenote: you can use stringr to combine two strings for the variable name 
 
-#exercises 2--------------------------------------------
+# ------------- exercises 2 -------------------------------      
 
 #1. Create a new dataframe that includes only the variables ID, yob, urbanrural2021, race, HHnetworth_30, HHnetworth_35, and HHnetworth_40. Save it as df_networth.
 #2. Reshape df_networth so that the net worth variables are in long format.
@@ -209,7 +213,6 @@ back_to_wide <- back_to_wide |>
 df_simple <- df |>
   filter(last_interview_round == "20") |> #filter to only include cases with data from the most recent round of interviews
   select(ID:race, educ:ma_date, yob:resmom_edu, hhincome2021) #select variables of interest
-unique(df_simple$educ)
 
 
 df_simple|>
@@ -243,12 +246,8 @@ df_simple <- df_simple |>
   mutate(parent_edu = pmax(as.numeric(biodad_edu), as.numeric(biomom_edu), as.numeric(resdad_edu), as.numeric(resmom_edu), na.rm = TRUE)) |>
   mutate(parent_edu = factor(parent_edu, levels = 1:4, labels = names(ranking), ordered = TRUE))
 
-#Double check that we've got the data we want
+#Take a look to ensure we did what we meant to do.
 df_simple
-
-#look again for missing values
-df_simple |>
-  summarize(across(everything(), ~ sum(is.na(.))))
 
 #Now we can drop the individual parent education variables and the cases where no parent education data is available.
 df_simple <- df_simple |>
@@ -258,7 +257,7 @@ df_simple <- df_simple |>
 #We can save this dataset by writing to a csv. Note that I put my output data in a different directory than my input data.
 write_csv(df_simple, "data/output/df_simple.csv")
 
-#exercises 3--------------------------------------------
+# ------------- exercises 3 -------------------------------      
 
 #1. Using the 'df_networth' dataframe,  you created in the second set of exercises, create a new variable for the year R was 30.
 #2. Save the df_networth dataframe as a csv in the output directory. 
@@ -269,20 +268,23 @@ write_csv(df_simple, "data/output/df_simple.csv")
 
 #--------------DESCRIPTIVE STATS WITH DPLYR------------------------
 
-#univariate frequencies and summary stats
+# ------------- univariate frequencies and summary stats -------------------------------      
 
+#categorical variable
 df_simple |>
-  group_by(parent_edu) |>  #categorical variable
+  group_by(parent_edu) |>  
   count()
 
+#continuous variable
 df_simple |>
-  summarize(mean_income = mean(hhincome2021, na.rm = TRUE),    #continuous variable
+  summarize(mean_income = mean(hhincome2021, na.rm = TRUE),    
             median_income = median(hhincome2021, na.rm = TRUE),
             sd_income = sd(hhincome2021, na.rm = TRUE),
             min_income = min(hhincome2021, na.rm = TRUE),
             max_income = max(hhincome2021, na.rm = TRUE))
 
-#bivariate frequencies (crosstabs) and summary stats
+# ------------- bivariate frequencies (crosstabs) and summary stats -------------------------------      
+
 df_simple |>
   group_by(parent_edu, educ) |>
   count() |>
@@ -298,10 +300,11 @@ df_simple |>
 
 #--------------EXPLORATORY VISUALIZATION WITH GGPLOT-----------------------
 
-#univariate 
-
+#ggplot2 is a package that implements the grammar of graphics. It's a powerful tool for creating visualizations.
 
 #You can think of ggplot as a way to build up a plot piece by piece. You start by specifying the data you want to plot and the variables you want to map to aesthetics, then you add layers to the plot.
+
+# ------------- univariate   -------------------------------      
 
 ggplot(df_simple, aes(x = parent_edu)) + #specify the dataset and the variable you want to plot
   geom_bar()  #add a layer for the plot type
@@ -319,7 +322,7 @@ ggplot(df_simple, aes(y = hhincome2021)) +
   labs(title = "Household income distribution") #add a title
 
 
-#bivariate 
+# ------------- bivariate -------------------------------      
 
 ggplot(df_simple, aes(x = parent_edu, y = educ)) + 
   geom_jitter() 
@@ -332,9 +335,10 @@ ggplot(df_simple, aes(x = hhincome2021)) +
   geom_histogram() + 
   facet_wrap(~parent_edu) 
 
-#exercises 4--------------------------------------------
+# ------------- exercises 4 -------------------------------      
 
 #Complete these questions using df_networth:
+
 #1. What is the distribution of this sample by race? Run summary stats and visualize this distribution.
 #2. How is the urbanrural variable distributed across racial categories in this sample? Run summary stats and visualize this relationship.
 #3. How does household networth vary by race in this sample? Run summary stats and visualize this relationship. 
@@ -342,29 +346,3 @@ ggplot(df_simple, aes(x = hhincome2021)) +
 #trickier
 #4. Merge df_networth with df_simple. You will need to use join, a dplyr verb we didn't try. Ask google/chatgpt about it, or type '?join" into your console to read the docs.
 #5. Create a scatterplot with household income on the x-axis and household networth on the y-axis. 
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#export csv
-
