@@ -22,7 +22,7 @@ library(tidyverse)
 
 #try(setwd(dirname(rstudioapi::getActiveDocumentContext()$path)))
 
-df <- read_csv("data/tidytutorial.csv") #read in the data
+df <- read_csv("data/tidytutorial_RAW.csv") #read in the data
 
 # all sorts of ways to take a look at the data
 
@@ -289,7 +289,7 @@ ggplot(df_simple, aes(x = hhincome2021)) +
   geom_histogram() + 
   facet_wrap(~parent_edu) #facet_wrap creates separate plots for each level of a categorical variable
 
-# ------------- exercises 4 -------------------------------      
+# ------------- exercises 3 -------------------------------      
 
 #Complete these questions using df_networth:
 
